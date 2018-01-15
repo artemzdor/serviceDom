@@ -1,1 +1,1 @@
-worker: python serviceDom.py
+web: gunicorn runp-heroku:app
