@@ -14,7 +14,7 @@ def hello():
         <title>Home Page</title>
       </head>
       <body>
-        <h3>Привет Макс это наш сервис!!!</h3>
+        <h3>Привет Макс это наш сервис!!! <br>Ура!</h3>
       </body>
     </html>
     '''
