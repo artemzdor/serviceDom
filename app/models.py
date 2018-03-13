@@ -68,7 +68,7 @@ class Master(db.Model):
         self.FOTO = FOTO
         self.login = login
         self.password = password
-        self.HASH = hash
+        self.HASH = HASH
 
     def __repr__(self):
         return "{}, {}, {}".format(self.IDMASTER, self.SHOTNAMEMASTER, self.FULLNAMEMASTER)
@@ -93,7 +93,7 @@ class Master(db.Model):
             FOTO=obj.get('FOTO'),
             login=obj.get('login'),
             password=obj.get('password'),
-            hash=obj.get('HASH'),)
+            HASH=obj.get('HASH'),)
 
     def getValue(self):
         return (self.IDMASTER,
@@ -147,7 +147,7 @@ class Master(db.Model):
         d['FOTO'] = self.FOTO
         d['login'] = self.login
         d['password'] = self.password
-        d['HASH'] = self.hash
+        d['HASH'] = self.HASH
         return d
 
 class Static(db.Model):

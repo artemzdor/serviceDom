@@ -35,7 +35,7 @@ class JSONEncoder(app.json_encoder):
 
 app.json_encoder = JSONEncoder
 
-@app.route('/msster/<USERNAME>/add/list/{0}'.format(MD5), methods=['GET', 'POST'])
+@app.route('/master/<USERNAME>/add/list/{0}'.format(MD5), methods=['GET', 'POST'])
 def addMasters(USERNAME):
     statics = []
     try:
@@ -80,7 +80,7 @@ def addMasters(USERNAME):
         setStatic(statics)
         return jsonify(statics)
 
-@app.route('/msster/<USERNAME>/dell/list/{0}'.format(MD5), methods=['GET', 'POST'])
+@app.route('/master/<USERNAME>/dell/list/{0}'.format(MD5), methods=['GET', 'POST'])
 def dellMasters(USERNAME):
     statics = []
     try:
@@ -126,7 +126,7 @@ def dellMasters(USERNAME):
         setStatic(statics)
         return jsonify(statics)
 
-@app.route('/msster/<USERNAME>/get/list/{0}'.format(MD5), methods=['GET', 'POST'])
+@app.route('/master/<USERNAME>/get/list/{0}'.format(MD5), methods=['GET', 'POST'])
 def getMasters(USERNAME):
     statics = []
     text = '[]'
@@ -331,6 +331,58 @@ def getAndroid(HASH):
         statics.append(stat)
         setStatic(statics)
         return jsonify("{}")
+
+@app.route('/Android/<HASH>/update/declarations/list/{0}'.format(MD5), methods=['GET', 'POST'])
+def updateAndroid(HASH):
+    statics = []
+
+    user = Master.query.filter_by(HASH=HASH).first()
+
+    if user == None and user == []:
+        return
+
+    try:
+        data = request.data
+        declarations = Declaration.loadJson(data)
+        for dec in declarations:
+            try:
+                db.session.add(dec)
+                db.session.commit()
+                stat = Static(idUser=HASH,
+                              nameTable="Declaration",
+                              IdTable=dec.DECLID,
+                              operator="add",
+                              success="True",
+                              dateUpdate=datetime.datetime.utcnow().__str__(),
+                              text=dec.__str__())
+                statics.append(stat)
+            except IntegrityError as ex:
+                db.session.rollback()
+                stat = Static(idUser=HASH,
+                              nameTable="Declaration",
+                              IdTable=dec.DECLID,
+                              operator="add",
+                              success="False",
+                              dateUpdate=datetime.datetime.utcnow().__str__(),
+                              text=ex.__str__(),
+                              error="IntegrityError/Add")
+                statics.append(stat)
+                print("error add: \n {}".format(ex.__str__()))
+        setStatic(statics)
+        return jsonify(statics)
+    except Exception as ex:
+        stat = Static(idUser=HASH,
+                      nameTable="Declaration",
+                      IdTable=0,
+                      operator="add",
+                      success="False",
+                      dateUpdate=datetime.datetime.utcnow().__str__(),
+                      text=ex.__str__(),
+                      error="request.data/Declaration.loadJson(data)")
+        statics.append(stat)
+        setStatic(statics)
+        return jsonify(statics)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
