@@ -9,6 +9,7 @@ from app import db
 from app import app
 import datetime
 import json
+import hashlib
 
 import lib.master
 import lib.SQLConnect
@@ -24,7 +25,6 @@ def setStatic(staticlist):
         except IntegrityError:
             print("Error setStatic")
             i.write = "False"
-
 
 class JSONEncoder(app.json_encoder):
     def default(self, o):
@@ -57,7 +57,7 @@ def addMasters(USERNAME):
                 db.session.rollback()
                 stat = Static(idUser=USERNAME,
                               nameTable="Master",
-                              IdTable=mas.IDMASTER,
+                              IdTable=0,
                               operator="add",
                               success="False",
                               dateUpdate=datetime.datetime.utcnow().__str__(),
@@ -103,7 +103,7 @@ def dellMasters(USERNAME):
                 db.session.rollback()
                 stat = Static(idUser=USERNAME,
                               nameTable="Master",
-                              IdTable=mas.IDMASTER,
+                              IdTable=0,
                               operator="delete",
                               success="False",
                               dateUpdate=datetime.datetime.utcnow().__str__(),
@@ -184,7 +184,7 @@ def addDeclarations(USERNAME):
                 db.session.rollback()
                 stat = Static(idUser=USERNAME,
                               nameTable="Declaration",
-                              IdTable=dec.DECLID,
+                              IdTable=0,
                               operator="add",
                               success="False",
                               dateUpdate=datetime.datetime.utcnow().__str__(),
@@ -230,7 +230,7 @@ def dellDeclarations(USERNAME):
                 db.session.rollback()
                 stat = Static(idUser=USERNAME,
                               nameTable="Declaration",
-                              IdTable=dec.DECLID,
+                              IdTable=0,
                               operator="delete",
                               success="False",
                               dateUpdate=datetime.datetime.utcnow().__str__(),
@@ -300,7 +300,7 @@ def getAndroid(HASH):
         if user == None and user == []:
             return
 
-        declarations = Declaration.query.filter_by(IDMASTER=user.IDMASTER)
+        declarations = Declaration.query.filter_by(MASTERID=user.IDMASTER).all()
 
         if declarations == None or declarations == []:
             declarations = "{}"
@@ -330,7 +330,7 @@ def getAndroid(HASH):
                       error="")
         statics.append(stat)
         setStatic(statics)
-        return jsonify("{}")
+        return "null"
 
 @app.route('/Android/<HASH>/update/declarations/list/{0}'.format(MD5), methods=['GET', 'POST'])
 def updateAndroid(HASH):
@@ -360,7 +360,7 @@ def updateAndroid(HASH):
                 db.session.rollback()
                 stat = Static(idUser=HASH,
                               nameTable="Declaration",
-                              IdTable=dec.DECLID,
+                              IdTable=0,
                               operator="add",
                               success="False",
                               dateUpdate=datetime.datetime.utcnow().__str__(),
@@ -383,6 +383,150 @@ def updateAndroid(HASH):
         setStatic(statics)
         return jsonify(statics)
 
+@app.route('/masterpasword/<USERNAME>/<LOGIN>/<PASSWORD>/<IDMASTER>/setpassword/item/{0}'.format(MD5), methods=['GET', 'POST'])
+def setPassword(USERNAME, LOGIN, PASSWORD, IDMASTER):
+    statics = []
+    try:
+
+        user = Master.query.filter_by(IDMASTER=IDMASTER).first()
+
+        if(user != None):
+            user.login = LOGIN
+            user.password = PASSWORD
+
+            h = "кощая задница пушиста {0}{1}".format(LOGIN, PASSWORD)
+            hx = hashlib.md5()
+            hx.update(h.encode("utf-8"))
+            user.HASH = hx.hexdigest()
+            db.session.commit()
+
+            stat = Static(idUser=USERNAME,
+                          nameTable="Master",
+                          IdTable=user.IDMASTER,
+                          operator="setpassword",
+                          success="True",
+                          dateUpdate=datetime.datetime.utcnow().__str__(),
+                          text=user.__str__(),
+                          error="")
+            statics.append(stat)
+            setStatic(statics)
+
+    except Exception as ex:
+        stat = Static(idUser=USERNAME,
+                      nameTable="Master",
+                      IdTable=0,
+                      operator="setpassword",
+                      success="False",
+                      dateUpdate=datetime.datetime.utcnow().__str__(),
+                      text=ex.__str__(),
+                      error="hashlib.md5")
+        statics.append(stat)
+        setStatic(statics)
+
+    return jsonify(statics)
+
+@app.route('/Android/<LOGIN>/<PASSWORD>/getHASH/item/{0}'.format(MD5), methods=['GET', 'POST'])
+def getPassword(LOGIN, PASSWORD):
+    statics = []
+    user = None
+    try:
+
+        if(LOGIN != "" and LOGIN != None and PASSWORD != "" and PASSWORD != None):
+            user = Master.query.filter_by(login=LOGIN, password=PASSWORD).first()
+
+        if(user != None):
+
+            stat = Static(idUser="GetHASH",
+                          nameTable="Master",
+                          IdTable=user.IDMASTER,
+                          operator="Android/getHASH",
+                          success="True",
+                          dateUpdate=datetime.datetime.utcnow().__str__(),
+                          text=user.__str__(),
+                          error="")
+            statics.append(stat)
+            setStatic(statics)
+            return user.HASH;
+        else:
+            stat = Static(idUser="GetHASH",
+                          nameTable="Master",
+                          IdTable=0,
+                          operator="Android/getHASH",
+                          success="False",
+                          dateUpdate=datetime.datetime.utcnow().__str__(),
+                          text="error login, password",
+                          error="user == None, LOGIN/PASSWORD")
+            statics.append(stat)
+            setStatic(statics)
+            return "error login, password"
+
+    except Exception as ex:
+        stat = Static(idUser="GetHASH",
+                      nameTable="Master",
+                      IdTable=0,
+                      operator="Android/getHASH",
+                      success="False",
+                      dateUpdate=datetime.datetime.utcnow().__str__(),
+                      text=ex.__str__(),
+                      error="user.HASH")
+        statics.append(stat)
+        setStatic(statics)
+    return "error"
+
+@app.route('/Android/<HASH>/<DECLID>/<int:SOSTZAKAZID>/setSOSTZAKAZID/item/{0}'.format(MD5), methods=['GET', 'POST'])
+def setSOSTZAKAZID(HASH, DECLID, SOSTZAKAZID):
+    statics = []
+    try:
+        user = Master.query.filter_by(HASH=HASH).first()
+
+        if user == None and user == []:
+            return
+
+        declarations = Declaration.query.filter_by(DECLID=DECLID).all()
+
+        for i in declarations:
+            i.SOSTZAKAZID = int(SOSTZAKAZID)
+            db.session.commit()
+            stat = Static(idUser=HASH,
+                          nameTable="Declaration",
+                          IdTable=user.IDMASTER,
+                          operator="setSOSTZAKAZID",
+                          success="True",
+                          dateUpdate=datetime.datetime.utcnow().__str__(),
+                          text=user.__str__(),
+                          error="")
+            statics.append(stat)
+            setStatic(statics)
+
+        if declarations != None and declarations != []:
+            return "true"
+        else:
+
+            stat = Static(idUser=HASH,
+                          nameTable="Declaration",
+                          IdTable=user.IDMASTER,
+                          operator="setSOSTZAKAZID",
+                          success="False",
+                          dateUpdate=datetime.datetime.utcnow().__str__(),
+                          text="not Declaration: {0}".format(DECLID),
+                          error="")
+            statics.append(stat)
+            setStatic(statics)
+
+            return "false"
+
+    except Exception as ex:
+        stat = Static(idUser=HASH,
+                      nameTable="Declaration",
+                      IdTable=user.IDMASTER,
+                      operator="setSOSTZAKAZID",
+                      success="False",
+                      dateUpdate=datetime.datetime.utcnow().__str__(),
+                      text=ex.__str__(),
+                      error="")
+        statics.append(stat)
+        setStatic(statics)
+        return "error"
 
 if __name__ == "__main__":
     app.run(debug=True)

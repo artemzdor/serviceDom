@@ -101,3 +101,12 @@ db.session.commit()
 # for i in m:
 #     print(i)
 # print("end")
+
+import hashlib
+LOGIN = "1"
+PASSWORD = "1"
+h = "кощая задница пушиста {0}{1}".format(LOGIN, PASSWORD)
+hx = hashlib.md5()
+hx.update(h.encode("utf-8"))
+print(h)
+print(hx.hexdigest())
