@@ -80,6 +80,16 @@ def addMasters(USERNAME):
         setStatic(statics)
         return jsonify(statics)
 
+@app.route('/servis/getmd5/<usermd5>', methods=['GET', 'POST'])
+def getmd5(usermd5):
+    try:
+        if usermd5 == MD5:
+            return "1"
+        else:
+            return "2"
+    except Exception as ex:
+        return "3"
+
 @app.route('/master/<USERNAME>/dell/list/{0}'.format(MD5), methods=['GET', 'POST'])
 def dellMasters(USERNAME):
     statics = []
